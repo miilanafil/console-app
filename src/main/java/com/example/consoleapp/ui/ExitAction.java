@@ -1,7 +1,8 @@
 package com.example.consoleapp.ui;
 
-public class ExitAction extends MenuActions {
+public class ExitAction implements MenuAction {
 
-
+@Override
+    public  boolean execute (Scanner scanner) {return false};
 
 }
