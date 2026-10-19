@@ -1,15 +1,17 @@
+package main.java.com.example.consoleapp.ui;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Menu {
 
-private final Map<String , MenuAction> actions = new LinkHashMap<>();
-private final Map<String , Srting > labels = new LinkHashMap<>();
+private final Map<String , MenuAction > actions = new LinkedHashMap<>();
+private final Map<String , String > labels = new LinkedHashMap<>();
 
 
 //метод для отрисовки меню
-public void addItem (String key , String label , MenyAction action){
+public void addItem (String key , String label , MenuAction action){
 
     labels.put (key , label );
     actions.put (key , action);
@@ -36,7 +38,7 @@ scanner.close();
 
 public void printMenu(){
     System.out.println("------------------");
-    libles.forEach ((key , lable)->System.out.printf("%s. %s%n", key, label));
+    labels.forEach ((key , lable)->System.out.printf("%s. %s%n", key, label));
     System.out.println("------------------");
 }
 

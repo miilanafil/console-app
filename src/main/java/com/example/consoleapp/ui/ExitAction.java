@@ -1,8 +1,10 @@
-package com.example.consoleapp.ui;
+package main.java.com.example.consoleapp.ui;
+
+import java.util.Scanner;
 
 public class ExitAction implements MenuAction {
 
 @Override
-    public  boolean execute (Scanner scanner) {return false};
+    public  boolean execute (Scanner scanner) {return false;};
 
 }
