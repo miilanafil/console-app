@@ -1,4 +1,4 @@
-package main.java.com.example.consoleapp.ui;
+package com.example.consoleapp.ui;
 
 import java.util.Scanner;
 

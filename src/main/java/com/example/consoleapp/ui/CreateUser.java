@@ -1,4 +1,5 @@
-package main.java.com.example.consoleapp.ui;
+package com.example.consoleapp.ui;
+
 
 
 import java.util.Scanner;
@@ -10,6 +11,7 @@ public class CreateUser implements MenuAction {
 
         clearConsole ();
         com.example.consoleapp.entity.User user = new com.example.consoleapp.entity.User();
+        com.example.consoleapp.dao.UserDAOImpl saveUs = new com.example.consoleapp.dao.UserDAOImpl();
 
         System.out.print("Имя:  ");
         String UserName = scanner.nextLine();
@@ -24,6 +26,7 @@ public class CreateUser implements MenuAction {
         user.setAge(UserAge);
 
 
+        saveUs.create(user);
 
 
 

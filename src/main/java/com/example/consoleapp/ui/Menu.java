@@ -1,4 +1,4 @@
-package main.java.com.example.consoleapp.ui;
+package com.example.consoleapp.ui;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,7 +38,7 @@ scanner.close();
 
 public void printMenu(){
     System.out.println("------------------");
-    labels.forEach ((key , lable)->System.out.printf("%s. %s%n", key, label));
+    labels.forEach ((key , lable)->System.out.printf("%s. %s%n", key, lable));
     System.out.println("------------------");
 }
 
