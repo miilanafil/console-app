@@ -1,40 +1,31 @@
 package com.example.consoleapp.ui;
 
+import com.example.consoleapp.dao.UserDAO;
+import com.example.consoleapp.entity.User;
+import com.example.consoleapp.validation.UserInputParsers;
 
-
-import java.util.Scanner;
+import java.util.Objects;
 
 public class CreateUser implements MenuAction {
 
-    @Override
-    public  boolean execute (Scanner scanner) {
+    private final UserDAO userDao;
 
-        clearConsole ();
-        com.example.consoleapp.entity.User user = new com.example.consoleapp.entity.User();
-        com.example.consoleapp.dao.UserDAOImpl saveUs = new com.example.consoleapp.dao.UserDAOImpl();
-
-        System.out.print("Имя:  ");
-        String UserName = scanner.nextLine();
-        user.setName(UserName);
-
-        System.out.print("Почта:  ");
-        String UserEmail = scanner.nextLine();
-        user.setEmail(UserEmail);
-
-        System.out.print("Возраст:  ");
-        int UserAge = scanner.nextInt();
-        user.setAge(UserAge);
-
-
-        saveUs.create(user);
-
-        return true;
-
-
+    public CreateUser(UserDAO userDao) {
+        this.userDao = Objects.requireNonNull(userDao, "userDao");
     }
-    public static void clearConsole() {
-        for (int i = 0; i < 50; i++) {
-            System.out.println();
-        }
+
+    @Override
+    public boolean execute(ConsoleIO io) {
+        io.println("Создание пользователя");
+
+        String name = io.read("Имя: ", UserInputParsers.NAME);
+        String email = io.read("Email: ", UserInputParsers.EMAIL);
+        Integer age = io.read("Возраст: ", UserInputParsers.AGE);
+
+        // DaoException (например, такой email уже есть) обработает Menu
+        User created = userDao.create(new User(name, email, age));
+
+        io.println("Пользователь создан, id = " + created.getId());
+        return true;
     }
 }

@@ -1,45 +1,93 @@
 package com.example.consoleapp.ui;
 
+import com.example.consoleapp.exception.DaoException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Scanner;
+import java.util.Objects;
+
 
 public class Menu {
 
-private final Map<String , MenuAction > actions = new LinkedHashMap<>();
-private final Map<String , String > labels = new LinkedHashMap<>();
+    private static final Logger log = LoggerFactory.getLogger(Menu.class);
+    private static final String SEPARATOR = "------------------";
 
 
-//метод для отрисовки меню
-public void addItem (String key , String label , MenuAction action){
-
-    labels.put (key , label );
-    actions.put (key , action);
-
-}
-public void run() {
-    Scanner scanner = new Scanner(System.in);
-
-    while (true){
-        printMenu();
-
-        System.out.print("выберите пункт:");
-        String ch = scanner.nextLine().trim();
-
-        MenuAction action = actions.get (ch);
-        if (action == null){ System.out.println("неверный пункт"); continue;}
-
-        boolean keepRun = action.execute (scanner);
-        if (!keepRun){break;}
+    private record Item(String label, MenuAction action) {
     }
-scanner.close();
 
-}
 
-public void printMenu(){
-    System.out.println("------------------");
-    labels.forEach ((key , lable)->System.out.printf("%s. %s%n", key, lable));
-    System.out.println("------------------");
-}
+    private final Map<String, Item> items = new LinkedHashMap<>();
+    private final ConsoleIO io;
 
+    public Menu(ConsoleIO io) {
+        this.io = Objects.requireNonNull(io, "io");
+    }
+
+
+    public void addItem(String key, String label, MenuAction action) {
+        Objects.requireNonNull(key, "key");
+        Objects.requireNonNull(label, "label");
+        Objects.requireNonNull(action, "action");
+
+        String normalizedKey = key.strip();
+        if (normalizedKey.isEmpty()) {
+            throw new IllegalArgumentException("Ключ пункта меню не может быть пустым");
+        }
+        if (items.containsKey(normalizedKey)) {
+            throw new IllegalArgumentException("Пункт меню с ключом '" + normalizedKey + "' уже добавлен");
+        }
+        items.put(normalizedKey, new Item(label, action));
+    }
+
+    /**
+     * Цикл меню. Завершается, когда действие вернёт {@code false} или закончится ввод.
+     */
+    public void run() {
+        if (items.isEmpty()) {
+            throw new IllegalStateException("В меню нет ни одного пункта");
+        }
+        try {
+            boolean running = true;
+            while (running) {
+                printMenu();
+                String choice = io.readLine("Выберите пункт: ").strip();
+
+                Item item = items.get(choice);
+                if (item == null) {
+                    io.println("Неизвестный пункт: '" + choice + "'. Введите номер из списка.");
+                    continue;
+                }
+                running = execute(item);
+            }
+        } catch (InputClosedException e) {
+            io.println("Ввод завершён. Выход из программы.");
+        }
+    }
+
+    private boolean execute(Item item) {
+        try {
+            return item.action().execute(io);
+        } catch (InputClosedException e) {
+
+            throw e;
+        } catch (DaoException e) {
+            log.warn("Ошибка БД при выполнении пункта '{}'", item.label(), e);
+            io.println("Ошибка при работе с базой данных: " + e.getMessage());
+            return true;
+        } catch (RuntimeException e) {
+
+            log.error("Непредвиденная ошибка при выполнении пункта '{}'", item.label(), e);
+            io.println("Непредвиденная ошибка: " + e.getMessage());
+            return true;
+        }
+    }
+
+    private void printMenu() {
+        io.println(SEPARATOR);
+        items.forEach((key, item) -> io.printf("%s. %s%n", key, item.label()));
+        io.println(SEPARATOR);
+    }
 }

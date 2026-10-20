@@ -1,7 +1,7 @@
 package com.example.consoleapp.ui;
 
-import java.util.Scanner;
-
+@FunctionalInterface
 interface MenuAction {
-    boolean execute (Scanner scanner);
+
+    boolean execute(ConsoleIO io);
 }

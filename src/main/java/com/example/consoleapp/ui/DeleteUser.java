@@ -1,20 +1,32 @@
 package com.example.consoleapp.ui;
 
-import java.util.Scanner;
+import com.example.consoleapp.dao.UserDAO;
+import com.example.consoleapp.validation.UserInputParsers;
 
-public class DeleteUser implements MenuAction{
+import java.util.Objects;
 
+public class DeleteUser implements MenuAction {
+
+    private final UserDAO userDao;
+
+    public DeleteUser(UserDAO userDao) {
+        this.userDao = Objects.requireNonNull(userDao, "userDao");
+    }
 
     @Override
-    public boolean execute(Scanner scanner) {
-        com.example.consoleapp.dao.UserDAOImpl userdel = new  com.example.consoleapp.dao.UserDAOImpl();
-        com.example.consoleapp.entity.User user = new com.example.consoleapp.entity.User();
+    public boolean execute(ConsoleIO io) {
+        io.println("Удаление пользователя");
 
-        System.out.print("id:  ");
-        String UserID = scanner.nextLine();
-        user.setId(Long.valueOf(UserID));
+        Long id = io.read("Id: ", UserInputParsers.ID);
+        if (!io.confirm("Удалить пользователя с id = " + id + "?")) {
+            io.println("Удаление отменено");
+            return true;
+        }
 
-        userdel.delete(user.getId());
-        return false;
+        boolean deleted = userDao.delete(id);
+        io.println(deleted
+                ? "Пользователь с id = " + id + " удалён"
+                : "Пользователь с id = " + id + " не найден");
+        return true;
     }
 }
