@@ -28,14 +28,6 @@ public class CreateUser implements MenuAction {
 
         saveUs.create(user);
 
-
-
-
-
-
-
-
-
         return true;
 
 
