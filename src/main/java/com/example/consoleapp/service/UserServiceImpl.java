@@ -57,7 +57,7 @@ public class UserServiceImpl implements UserService {
 
     private void validateUser(User user) {
         if (user == null) {
-            throw new IllegalArgumentException("Пользователь не может быть null");
+            throw new IllegalArgumentException("Пользователь не может быть пустым");
         }
 
         if (user.getName() == null || user.getName().trim().isEmpty()) {
@@ -77,8 +77,8 @@ public class UserServiceImpl implements UserService {
         if (user.getAge() == null || user.getAge() <= 0) {
             throw new IllegalArgumentException("Возраст должен быть больше нуля");
         }
-        if (user.getAge() > 150) {
-            throw new IllegalArgumentException("Возраст не может превышать 150 лет");
+        if (user.getAge() > 100) {
+            throw new IllegalArgumentException("Возраст не может превышать 100 лет");
         }
     }
 

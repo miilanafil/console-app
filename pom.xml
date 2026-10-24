@@ -22,7 +22,8 @@
         <postgresql.version>42.7.14</postgresql.version>
         <logback.version>1.6.5</logback.version>
         <junit.version>5.10.2</junit.version>
-        <testcontainers.version>1.19.7</testcontainers.version>
+        <mockito.version>5.11.0</mockito.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
         <commons-compress.version>1.27.1</commons-compress.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
@@ -56,7 +57,14 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.11.0</version>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -98,13 +106,13 @@
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>postgresql</artifactId>
+            <artifactId>testcontainers-postgresql</artifactId>
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
-            <artifactId>junit-jupiter</artifactId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
