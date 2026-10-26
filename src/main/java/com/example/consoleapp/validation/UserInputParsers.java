@@ -9,15 +9,15 @@ public final class UserInputParsers {
     public static final int MAX_NAME_LENGTH = 100;
 
     public static final int MAX_EMAIL_LENGTH = 254;
-    public static final int MIN_AGE = 0;
-    public static final int MAX_AGE = 150;
+    public static final int MIN_AGE = 1;
+    public static final int MAX_AGE = 100;
 
     private static final Pattern NAME_PATTERN =
             Pattern.compile("\\p{L}+(?:[ '-]\\p{L}+)*");
 
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "[A-Za-z0-9_%+-]+(?:\\.[A-Za-z0-9_%+-]+)*"
+            "[A-Za-z0-9_+-]+(?:\\.[A-Za-z0-9_+-]+)*"
                     + "@"
                     + "(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\\.)+"
                     + "[A-Za-z]{2,}");

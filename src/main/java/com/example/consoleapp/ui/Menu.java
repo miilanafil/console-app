@@ -77,6 +77,13 @@ public class Menu {
             log.warn("Ошибка БД при выполнении пункта '{}'", item.label(), e);
             io.println("Ошибка при работе с базой данных: " + e.getMessage());
             return true;
+        } catch (IllegalArgumentException e) {
+            // UserServiceImpl сообщает о неверных данных через IllegalArgumentException.
+            // Обычно UI отсекает их раньше, но если правила сервиса окажутся строже, пользователь
+            // должен увидеть понятную причину, а не «непредвиденную ошибку».
+            log.warn("Сервис отклонил данные в пункте '{}': {}", item.label(), e.getMessage());
+            io.println("Ошибка: " + e.getMessage());
+            return true;
         } catch (RuntimeException e) {
 
             log.error("Непредвиденная ошибка при выполнении пункта '{}'", item.label(), e);

@@ -1,6 +1,6 @@
 package com.example.consoleapp.ui;
 
-import com.example.consoleapp.dao.UserDAO;
+import com.example.consoleapp.service.UserService;
 import com.example.consoleapp.validation.UserInputParsers;
 
 import java.util.Objects;
@@ -8,18 +8,18 @@ import java.util.Objects;
 
 public class FindUser implements MenuAction {
 
-    private final UserDAO userDao;
+    private final UserService userService;
     private final UserTablePrinter printer;
 
-    public FindUser(UserDAO userDao, UserTablePrinter printer) {
-        this.userDao = Objects.requireNonNull(userDao, "userDao");
+    public FindUser(UserService userService, UserTablePrinter printer) {
+        this.userService = Objects.requireNonNull(userService, "userService");
         this.printer = Objects.requireNonNull(printer, "printer");
     }
 
     @Override
     public boolean execute(ConsoleIO io) {
         Long id = io.read("Id: ", UserInputParsers.ID);
-        userDao.findById(id).ifPresentOrElse(
+        userService.getUserById(id).ifPresentOrElse(
                 user -> io.print(printer.renderOne(user)),
                 () -> io.println("Пользователь с id = " + id + " не найден"));
         return true;

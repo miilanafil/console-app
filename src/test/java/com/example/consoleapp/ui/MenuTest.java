@@ -131,6 +131,23 @@ class MenuTest {
     }
 
     @Test
+    void run_illegalArgumentFromService_showsReasonAndReturnsToMenu() {
+        Menu menu = menuWithInput("1\n2\n9\n");
+        menu.addItem("1", "Отклонено сервисом", io -> {
+            throw new IllegalArgumentException("Возраст не может превышать 100 лет");
+        });
+        menu.addItem("2", "Рабочий", recording("ok"));
+        menu.addItem("9", "Выход", EXIT);
+
+        assertDoesNotThrow(menu::run);
+
+        assertEquals(List.of("ok"), calls);
+        assertTrue(output().contains("Ошибка: Возраст не может превышать 100 лет"));
+        assertFalse(output().contains("Непредвиденная ошибка"),
+                "отказ сервиса из-за данных — не баг, и сообщение должно быть обычным");
+    }
+
+    @Test
     void run_unexpectedRuntimeException_showsMessageAndReturnsToMenu() {
         Menu menu = menuWithInput("1\n9\n");
         menu.addItem("1", "С багом", io -> {

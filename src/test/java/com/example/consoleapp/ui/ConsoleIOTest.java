@@ -62,7 +62,7 @@ class ConsoleIOTest {
         String out = output();
         assertEquals(3, countOccurrences(out, "Возраст: "), "приглашение должно быть показано 3 раза");
         assertTrue(out.contains("целым числом"));
-        assertTrue(out.contains("от 0 до 150"));
+        assertTrue(out.contains("от 1 до 100"));
     }
 
     @Test

@@ -1,8 +1,9 @@
 package com.example.consoleapp.ui;
 
 import com.example.consoleapp.config.HibernateUtil;
-import com.example.consoleapp.dao.UserDAO;
 import com.example.consoleapp.dao.UserDAOImpl;
+import com.example.consoleapp.service.UserService;
+import com.example.consoleapp.service.UserServiceImpl;
 
 import java.util.Scanner;
 
@@ -18,15 +19,16 @@ public class Main {
 
         try {
 
-            UserDAO userDao = new UserDAOImpl();
+            // UI -> UserService -> UserDAO: интерфейс работает только с сервисом
+            UserService userService = new UserServiceImpl(new UserDAOImpl());
             UserTablePrinter printer = new UserTablePrinter();
 
             Menu menu = new Menu(io);
-            menu.addItem("1", "Создать", new CreateUser(userDao));
-            menu.addItem("2", "Показать всех", new ReadUsers(userDao, printer));
-            menu.addItem("3", "Найти по id", new FindUser(userDao, printer));
-            menu.addItem("4", "Изменить", new UpdateUser(userDao));
-            menu.addItem("5", "Удалить", new DeleteUser(userDao));
+            menu.addItem("1", "Создать", new CreateUser(userService));
+            menu.addItem("2", "Показать всех", new ReadUsers(userService, printer));
+            menu.addItem("3", "Найти по id", new FindUser(userService, printer));
+            menu.addItem("4", "Изменить", new UpdateUser(userService));
+            menu.addItem("5", "Удалить", new DeleteUser(userService));
             menu.addItem("0", "Выход", new ExitAction());
             menu.run();
         } finally {

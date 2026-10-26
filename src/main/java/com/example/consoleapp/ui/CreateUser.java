@@ -1,6 +1,6 @@
 package com.example.consoleapp.ui;
 
-import com.example.consoleapp.dao.UserDAO;
+import com.example.consoleapp.service.UserService;
 import com.example.consoleapp.entity.User;
 import com.example.consoleapp.validation.UserInputParsers;
 
@@ -8,10 +8,10 @@ import java.util.Objects;
 
 public class CreateUser implements MenuAction {
 
-    private final UserDAO userDao;
+    private final UserService userService;
 
-    public CreateUser(UserDAO userDao) {
-        this.userDao = Objects.requireNonNull(userDao, "userDao");
+    public CreateUser(UserService userService) {
+        this.userService = Objects.requireNonNull(userService, "userService");
     }
 
     @Override
@@ -23,7 +23,7 @@ public class CreateUser implements MenuAction {
         Integer age = io.read("Возраст: ", UserInputParsers.AGE);
 
         // DaoException (например, такой email уже есть) обработает Menu
-        User created = userDao.create(new User(name, email, age));
+        User created = userService.createUser(new User(name, email, age));
 
         io.println("Пользователь создан, id = " + created.getId());
         return true;

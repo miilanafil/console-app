@@ -8,8 +8,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CreateUserTest {
 
-    private final InMemoryUserDAO dao = new InMemoryUserDAO();
-    private final CreateUser action = new CreateUser(dao);
+    private final InMemoryUserService service = new InMemoryUserService();
+    private final CreateUser action = new CreateUser(service);
 
     @Test
     void execute_validInput_savesUserAndPrintsId() {
@@ -18,8 +18,8 @@ class CreateUserTest {
         boolean keepRunning = action.execute(console.io());
 
         assertTrue(keepRunning, "после создания нужно вернуться в меню");
-        assertEquals(1, dao.size());
-        User saved = dao.stored(1).orElseThrow();
+        assertEquals(1, service.size());
+        User saved = service.stored(1).orElseThrow();
         assertAll(
                 () -> assertEquals("Ivan", saved.getName()),
                 () -> assertEquals("ivan@example.com", saved.getEmail()),
@@ -34,7 +34,7 @@ class CreateUserTest {
 
         action.execute(console.io());
 
-        User saved = dao.stored(1).orElseThrow();
+        User saved = service.stored(1).orElseThrow();
         assertEquals("Иван Петров", saved.getName());
         assertEquals("ivan@example.com", saved.getEmail());
         assertEquals(30, saved.getAge());
@@ -49,29 +49,29 @@ class CreateUserTest {
 
         action.execute(console.io());
 
-        assertEquals(1, dao.size(), "сохранён ровно один пользователь, с корректными данными");
-        assertEquals("Ivan", dao.stored(1).orElseThrow().getName());
+        assertEquals(1, service.size(), "сохранён ровно один пользователь, с корректными данными");
+        assertEquals("Ivan", service.stored(1).orElseThrow().getName());
         String out = console.output();
         assertTrue(out.contains("не может быть пустым"));
         assertTrue(out.contains("только буквы"));
         assertTrue(out.contains("Некорректный email"));
         assertTrue(out.contains("целым числом"));
-        assertTrue(out.contains("от 0 до 150"));
+        assertTrue(out.contains("от 1 до 100"));
     }
 
     @Test
     void execute_duplicateEmail_propagatesDaoException() {
-        dao.given("Petr", "ivan@example.com", 40);
+        service.given("Petr", "ivan@example.com", 40);
         TestConsole console = TestConsole.withInput("Ivan", "IVAN@example.com", "25");
 
         // Действие не глотает ошибку: её показывает Menu (см. MenuTest и тест ниже)
         assertThrows(DaoException.class, () -> action.execute(console.io()));
-        assertEquals(1, dao.size());
+        assertEquals(1, service.size());
     }
 
     @Test
     void execute_duplicateEmail_insideMenu_showsErrorAndContinues() {
-        dao.given("Petr", "ivan@example.com", 40);
+        service.given("Petr", "ivan@example.com", 40);
         TestConsole console = TestConsole.withInput("1", "Ivan", "ivan@example.com", "25", "0");
         Menu menu = new Menu(console.io());
         menu.addItem("1", "Создать", action);
@@ -85,11 +85,26 @@ class CreateUserTest {
     }
 
     @Test
+    void execute_serviceRejectsData_insideMenu_showsReasonAndContinues() {
+        service.failNextCallWith(new IllegalArgumentException("Некорректный формат email"));
+        TestConsole console = TestConsole.withInput("1", "Ivan", "ivan@example.com", "25", "0");
+        Menu menu = new Menu(console.io());
+        menu.addItem("1", "Создать", action);
+        menu.addItem("0", "Выход", new ExitAction());
+
+        assertDoesNotThrow(menu::run);
+
+        assertEquals(0, service.size());
+        assertTrue(console.output().contains("Ошибка: Некорректный формат email"));
+        assertTrue(console.output().contains("До свидания!"));
+    }
+
+    @Test
     void execute_inputEndsBeforeAllFieldsEntered_savesNothing() {
         TestConsole console = TestConsole.withInput("Ivan", "ivan@example.com");
 
         assertThrows(InputClosedException.class, () -> action.execute(console.io()));
-        assertEquals(0, dao.size());
+        assertEquals(0, service.size());
     }
 
     @Test
