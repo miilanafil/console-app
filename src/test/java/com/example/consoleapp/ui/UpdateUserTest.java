@@ -9,13 +9,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class UpdateUserTest {
 
-    private final InMemoryUserDAO dao = new InMemoryUserDAO();
-    private final UpdateUser action = new UpdateUser(dao);
+    private final InMemoryUserService service = new InMemoryUserService();
+    private final UpdateUser action = new UpdateUser(service);
     private long ivanId;
 
     @BeforeEach
     void setUp() {
-        ivanId = dao.given("Ivan", "ivan@example.com", 25);
+        ivanId = service.given("Ivan", "ivan@example.com", 25);
     }
 
     @Test
@@ -25,13 +25,13 @@ class UpdateUserTest {
 
         assertTrue(action.execute(console.io()));
 
-        User updated = dao.stored(ivanId).orElseThrow();
+        User updated = service.stored(ivanId).orElseThrow();
         assertAll(
                 () -> assertEquals("Petr", updated.getName()),
                 () -> assertEquals("petr@example.com", updated.getEmail()),
                 () -> assertEquals(40, updated.getAge())
         );
-        assertEquals(1, dao.updateCalls());
+        assertEquals(1, service.updateCalls());
         assertTrue(console.output().contains("обновлён"));
     }
 
@@ -42,11 +42,11 @@ class UpdateUserTest {
 
         action.execute(console.io());
 
-        User updated = dao.stored(ivanId).orElseThrow();
+        User updated = service.stored(ivanId).orElseThrow();
         assertEquals("Ivan", updated.getName(), "имя не должно стать null или пустым");
         assertEquals("new@example.com", updated.getEmail());
         assertEquals(25, updated.getAge());
-        assertEquals(InMemoryUserDAO.CREATED_AT, updated.getCreatedCode(), "дата создания не меняется");
+        assertEquals(InMemoryUserService.CREATED_AT, updated.getCreatedCode(), "дата создания не меняется");
     }
 
     @Test
@@ -68,7 +68,7 @@ class UpdateUserTest {
 
         action.execute(console.io());
 
-        assertEquals(0, dao.updateCalls());
+        assertEquals(0, service.updateCalls());
         assertTrue(console.output().contains("Изменений нет"));
     }
 
@@ -78,7 +78,7 @@ class UpdateUserTest {
 
         assertTrue(action.execute(console.io()));
 
-        assertEquals(0, dao.updateCalls());
+        assertEquals(0, service.updateCalls());
         assertTrue(console.output().contains("Пользователь с id = 999 не найден"));
         assertFalse(console.output().contains("Имя ["));
     }
@@ -93,23 +93,23 @@ class UpdateUserTest {
 
         action.execute(console.io());
 
-        User updated = dao.stored(ivanId).orElseThrow();
+        User updated = service.stored(ivanId).orElseThrow();
         assertEquals("Petr", updated.getName());
         assertEquals(26, updated.getAge());
     }
 
     @Test
     void execute_emailTakenByAnotherUser_propagatesDaoException() {
-        dao.given("Petr", "petr@example.com", 40);
+        service.given("Petr", "petr@example.com", 40);
         TestConsole console = TestConsole.withInput(String.valueOf(ivanId), "", "petr@example.com", "");
 
         assertThrows(DaoException.class, () -> action.execute(console.io()));
-        assertEquals("ivan@example.com", dao.stored(ivanId).orElseThrow().getEmail(), "данные не изменились");
+        assertEquals("ivan@example.com", service.stored(ivanId).orElseThrow().getEmail(), "данные не изменились");
     }
 
     @Test
     void execute_daoFailsOnFind_propagatesDaoException() {
-        dao.failNextCallWith(new DaoException("connection refused"));
+        service.failNextCallWith(new DaoException("connection refused"));
         TestConsole console = TestConsole.withInput(String.valueOf(ivanId));
 
         assertThrows(DaoException.class, () -> action.execute(console.io()));

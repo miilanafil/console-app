@@ -1,8 +1,8 @@
 package com.example.consoleapp.ui;
 
-import com.example.consoleapp.dao.UserDAO;
 import com.example.consoleapp.entity.User;
 import com.example.consoleapp.exception.DaoException;
+import com.example.consoleapp.service.UserService;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -11,8 +11,22 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 
-
-class InMemoryUserDAO implements UserDAO {
+/**
+ * Fake-реализация {@link UserService} для unit-тестов интерфейса: хранит пользователей в памяти.
+ * <p>
+ * UI зависит только от {@code UserService}, поэтому тесты UI подставляют вместо него этот класс
+ * и не зависят ни от логики сервиса, ни от DAO, ни от БД. Сервис и DAO тестируются отдельно
+ * их авторами.
+ * <p>
+ * Fake повторяет те свойства настоящего стека, от которых зависит код действий:
+ * <ul>
+ *     <li>{@code createUser} присваивает id и дату создания переданному объекту (как {@code session.persist});</li>
+ *     <li>{@code getUserById}/{@code getAllUsers} возвращают <b>копии</b>: после закрытия сессии Hibernate
+ *         объекты detached, и их изменение без {@code updateUser} в БД не попадает;</li>
+ *     <li>повторный email даёт {@link DaoException}, как нарушение {@code UNIQUE} в PostgreSQL.</li>
+ * </ul>
+ */
+class InMemoryUserService implements UserService {
 
     static final Instant CREATED_AT = Instant.parse("2026-10-20T09:30:00Z");
 
@@ -20,9 +34,11 @@ class InMemoryUserDAO implements UserDAO {
     private long nextId = 1;
     private int updateCalls;
     private int deleteCalls;
-    private DaoException nextFailure;
+    private RuntimeException nextFailure;
 
+    // ---------- настройка из тестов ----------
 
+    /** Добавляет пользователя в обход createUser, возвращает присвоенный id. */
     long given(String name, String email, int age) {
         User user = new User(name, email, age);
         user.setId(nextId++);
@@ -31,13 +47,17 @@ class InMemoryUserDAO implements UserDAO {
         return user.getId();
     }
 
-
-    void failNextCallWith(DaoException failure) {
+    /**
+     * Следующий вызов любого метода сервиса бросит это исключение.
+     * {@link DaoException} — ошибка БД, {@link IllegalArgumentException} — сервис отклонил данные.
+     */
+    void failNextCallWith(RuntimeException failure) {
         this.nextFailure = failure;
     }
 
+    /** Что сейчас лежит «в БД» (копия). */
     Optional<User> stored(long id) {
-        return Optional.ofNullable(storage.get(id)).map(InMemoryUserDAO::copy);
+        return Optional.ofNullable(storage.get(id)).map(InMemoryUserService::copy);
     }
 
     int size() {
@@ -52,9 +72,10 @@ class InMemoryUserDAO implements UserDAO {
         return deleteCalls;
     }
 
+    // ---------- UserService ----------
 
     @Override
-    public User create(User user) {
+    public User createUser(User user) {
         throwIfFailureConfigured();
         requireUniqueEmail(user.getEmail(), null);
         user.setId(nextId++);
@@ -64,13 +85,13 @@ class InMemoryUserDAO implements UserDAO {
     }
 
     @Override
-    public Optional<User> findById(Long id) {
+    public Optional<User> getUserById(Long id) {
         throwIfFailureConfigured();
         return stored(id);
     }
 
     @Override
-    public List<User> findAll() {
+    public List<User> getAllUsers() {
         throwIfFailureConfigured();
         List<User> result = new ArrayList<>();
         storage.values().forEach(u -> result.add(copy(u)));
@@ -78,7 +99,7 @@ class InMemoryUserDAO implements UserDAO {
     }
 
     @Override
-    public User update(User user) {
+    public User updateUser(User user) {
         throwIfFailureConfigured();
         updateCalls++;
         if (user.getId() == null || !storage.containsKey(user.getId())) {
@@ -90,15 +111,17 @@ class InMemoryUserDAO implements UserDAO {
     }
 
     @Override
-    public boolean delete(Long id) {
+    public boolean deleteUser(Long id) {
         throwIfFailureConfigured();
         deleteCalls++;
         return storage.remove(id) != null;
     }
 
+    // ---------- вспомогательное ----------
+
     private void throwIfFailureConfigured() {
         if (nextFailure != null) {
-            DaoException failure = nextFailure;
+            RuntimeException failure = nextFailure;
             nextFailure = null;
             throw failure;
         }

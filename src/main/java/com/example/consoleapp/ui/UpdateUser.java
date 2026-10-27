@@ -1,6 +1,6 @@
 package com.example.consoleapp.ui;
 
-import com.example.consoleapp.dao.UserDAO;
+import com.example.consoleapp.service.UserService;
 import com.example.consoleapp.entity.User;
 import com.example.consoleapp.validation.InputParser;
 import com.example.consoleapp.validation.UserInputParsers;
@@ -11,10 +11,10 @@ import java.util.function.Consumer;
 
 public class UpdateUser implements MenuAction {
 
-    private final UserDAO userDao;
+    private final UserService userService;
 
-    public UpdateUser(UserDAO userDao) {
-        this.userDao = Objects.requireNonNull(userDao, "userDao");
+    public UpdateUser(UserService userService) {
+        this.userService = Objects.requireNonNull(userService, "userService");
     }
 
     @Override
@@ -22,7 +22,7 @@ public class UpdateUser implements MenuAction {
         io.println("Изменение пользователя");
 
         Long id = io.read("Id: ", UserInputParsers.ID);
-        Optional<User> found = userDao.findById(id);
+        Optional<User> found = userService.getUserById(id);
         if (found.isEmpty()) {
             io.println("Пользователь с id = " + id + " не найден");
             return true;
@@ -42,7 +42,7 @@ public class UpdateUser implements MenuAction {
             return true;
         }
 
-        userDao.update(user);
+        userService.updateUser(user);
         io.println("Пользователь с id = " + id + " обновлён");
         return true;
     }

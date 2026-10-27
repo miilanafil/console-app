@@ -118,9 +118,9 @@ class UserInputParsersTest {
 
         @ParameterizedTest(name = "\"{0}\" → {1}")
         @CsvSource({
-                "0,     0",       // нижняя граница
+                "1,     1",       // нижняя граница
                 "25,    25",
-                "150,   150",     // верхняя граница
+                "100,   100",     // верхняя граница
                 "' 30 ', 30",
                 "+18,   18"
         })
@@ -129,7 +129,7 @@ class UserInputParsersTest {
         }
 
         @ParameterizedTest(name = "\"{0}\"")
-        @ValueSource(strings = {"-1", "151", "1000"})
+        @ValueSource(strings = {"0", "-1", "101", "1000"})
         void ageOutOfRange_isRejected(String input) {
             ValidationException ex = assertThrows(ValidationException.class,
                     () -> UserInputParsers.parseAge(input));

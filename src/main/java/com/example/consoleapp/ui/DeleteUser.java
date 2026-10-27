@@ -1,16 +1,16 @@
 package com.example.consoleapp.ui;
 
-import com.example.consoleapp.dao.UserDAO;
+import com.example.consoleapp.service.UserService;
 import com.example.consoleapp.validation.UserInputParsers;
 
 import java.util.Objects;
 
 public class DeleteUser implements MenuAction {
 
-    private final UserDAO userDao;
+    private final UserService userService;
 
-    public DeleteUser(UserDAO userDao) {
-        this.userDao = Objects.requireNonNull(userDao, "userDao");
+    public DeleteUser(UserService userService) {
+        this.userService = Objects.requireNonNull(userService, "userService");
     }
 
     @Override
@@ -23,7 +23,7 @@ public class DeleteUser implements MenuAction {
             return true;
         }
 
-        boolean deleted = userDao.delete(id);
+        boolean deleted = userService.deleteUser(id);
         io.println(deleted
                 ? "Пользователь с id = " + id + " удалён"
                 : "Пользователь с id = " + id + " не найден");
