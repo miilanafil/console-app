@@ -1,90 +1,68 @@
 package com.example.consoleapp.service;
 
-import com.example.consoleapp.dao.UserDAO;
-import com.example.consoleapp.dao.UserDAOImpl;
+import com.example.consoleapp.dto.UserDto;
+import com.example.consoleapp.dto.UserRequestDto;
 import com.example.consoleapp.entity.User;
+import com.example.consoleapp.mapper.UserMapper;
+import com.example.consoleapp.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
+@Service
+@Transactional
 public class UserServiceImpl implements UserService {
-    private final UserDAO userDAO;
 
-    public UserServiceImpl() {
-        this.userDAO = new UserDAOImpl();
-    }
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public UserServiceImpl(UserDAO userDAO) {
-        this.userDAO = userDAO;
-    }
-
-    @Override
-    public User createUser(User user) {
-        validateUser(user);
-        user.setName(user.getName().trim());
-        user.setEmail(user.getEmail().trim().toLowerCase());
-        return userDAO.create(user);
+    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.userMapper = userMapper;
     }
 
     @Override
-    public Optional<User> getUserById(Long id) {
-        validateId(id);
-        return userDAO.findById(id);
+    public UserDto createUser(UserRequestDto requestDto) {
+        User user = userMapper.toEntity(requestDto);
+        User savedUser = userRepository.save(user);
+        return userMapper.toDto(savedUser);
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userDAO.findAll();
+    @Transactional(readOnly = true)
+    public UserDto getUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь с id = " + id + " не найден"));
+        return userMapper.toDto(user);
     }
 
     @Override
-    public User updateUser(User user) {
-        if (user == null || user.getId() == null) {
-            throw new IllegalArgumentException("Пользователь и его ID не могут быть пустыми");
-        }
-        validateId(user.getId());
-        validateUser(user);
-        user.setName(user.getName().trim());
-        user.setEmail(user.getEmail().trim().toLowerCase());
-        return userDAO.update(user);
+    @Transactional(readOnly = true)
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
     @Override
-    public boolean deleteUser(Long id) {
-        validateId(id);
-        return userDAO.delete(id);
+    public UserDto updateUser(Long id, UserRequestDto requestDto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь с id = " + id + " не найден"));
+
+        user.setName(requestDto.name().trim());
+        user.setEmail(requestDto.email().trim().toLowerCase());
+        user.setAge(requestDto.age());
+
+        User updatedUser = userRepository.save(user);
+        return userMapper.toDto(updatedUser);
     }
 
-    private void validateUser(User user) {
-        if (user == null) {
-            throw new IllegalArgumentException("Пользователь не может быть пустым");
+    @Override
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new IllegalArgumentException("Пользователь с id = " + id + " не найден");
         }
-
-        if (user.getName() == null || user.getName().trim().isEmpty()) {
-            throw new IllegalArgumentException("Имя не может быть пустым");
-        }
-        if (user.getName().length() > 255) {
-            throw new IllegalArgumentException("Имя не должно превышать 255 символов");
-        }
-
-        if (user.getEmail() == null || !user.getEmail().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new IllegalArgumentException("Некорректный формат email");
-        }
-        if (user.getEmail().length() > 255) {
-            throw new IllegalArgumentException("Email не должен превышать 255 символов");
-        }
-
-        if (user.getAge() == null || user.getAge() <= 0) {
-            throw new IllegalArgumentException("Возраст должен быть больше нуля");
-        }
-        if (user.getAge() > 100) {
-            throw new IllegalArgumentException("Возраст не может превышать 100 лет");
-        }
-    }
-
-    private void validateId(Long id) {
-        if (id == null || id <= 0) {
-            throw new IllegalArgumentException("ID должен быть больше нуля");
-        }
+        userRepository.deleteById(id);
     }
 }
