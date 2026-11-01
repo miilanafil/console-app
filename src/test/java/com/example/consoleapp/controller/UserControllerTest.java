@@ -33,8 +33,8 @@ class UserControllerTest {
     @Test
     void getAllUsers_ShouldReturnListOfUsers() throws Exception {
         // Данные, которые якобы вернет наш сервис (UserDto)
-        UserDto user1 = new UserDto(1L, "Milana", "milana@example.com", 20, LocalDateTime.now());
-        UserDto user2 = new UserDto(2L, "Ivan", "ivan@example.com", 25, LocalDateTime.now());
+        UserDto user1 = new UserDto(1L, "Milana", "milana@example.com", 20, java.time.Instant.now());
+        UserDto user2 = new UserDto(2L, "Ivan", "ivan@example.com", 25, java.time.Instant.now());
 
         Mockito.when(userService.getAllUsers()).thenReturn(List.of(user1, user2));
 
@@ -53,7 +53,7 @@ class UserControllerTest {
     void getUserById_ShouldReturnUser_WhenUserExists() throws Exception {
         Long userId = 1L;
         // Данные для заглушки сервиса (UserDto)
-        UserDto mockServiceResponse = new UserDto(userId, "Milana", "milana@example.com", 20, LocalDateTime.now());
+        UserDto mockServiceResponse = new UserDto(userId, "Milana", "milana@example.com", 20, java.time.Instant.now());
 
         Mockito.when(userService.getUserById(userId)).thenReturn(mockServiceResponse);
 
@@ -73,10 +73,10 @@ class UserControllerTest {
         UserRequestDto requestDto = new UserRequestDto("Yana", "yana@example.com", 22);
 
         // То, что сервис вернет обратно контроллеру после "сохранения" в БД (UserDto)
-        UserDto savedUserDto = new UserDto(3L, "Yana", "yana@example.com", 22, LocalDateTime.now());
+        UserDto savedUserDto = new UserDto(3L, "Yana", "yana@example.com", 22, java.time.Instant.now());
 
         // Контроллер внутри вызывает convertToUserDto(requestDto), поэтому мокаем с Mockito.any()
-        Mockito.when(userService.createUser(Mockito.any(UserDto.class))).thenReturn(savedUserDto);
+        Mockito.when(userService.createUser(Mockito.any(UserRequestDto.class))).thenReturn(savedUserDto);
 
         // Выполняем POST запрос
         mockMvc.perform(post("/api/users")
@@ -92,8 +92,8 @@ class UserControllerTest {
     void deleteUser_ShouldReturnNoContent() throws Exception {
         Long userId = 1L;
 
-        // Метод void ничего не возвращает, мы просто проверяем, что он вызывается без ошибок
-        Mockito.doNothing().when(userService.deleteUser(userId));
+        // Исправлено: передаем сам сервис в when(), а метод вызываем снаружи
+        Mockito.doNothing().when(userService).deleteUser(userId);
 
         // Выполняем DELETE запрос
         mockMvc.perform(delete("/api/users/{id}", userId))

@@ -41,16 +41,16 @@ public class UserController {
     // 3. Создать нового пользователя
     @PostMapping
     public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto requestDto) {
-        // Передаем в сервис старый формат, если ваш сервис принимает UserDto
-        // Если ваш сервис принимает UserRequestDto, оставьте просто userService.createUser(requestDto)
-        UserDto savedOldUser = userService.createUser(convertToUserDto(requestDto));
+        // Передаем напрямую requestDto, так как сервис ожидает именно его
+        UserDto savedOldUser = userService.createUser(requestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertToResponseDto(savedOldUser));
     }
 
     // 4. Обновить пользователя
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, @RequestBody UserRequestDto requestDto) {
-        UserDto updatedOldUser = userService.updateUser(id, convertToUserDto(requestDto));
+        // Передаем напрямую id и requestDto в соответствии с интерфейсом сервиса
+        UserDto updatedOldUser = userService.updateUser(id, requestDto);
         return ResponseEntity.ok(convertToResponseDto(updatedOldUser));
     }
 
@@ -64,20 +64,13 @@ public class UserController {
     // Вспомогательный метод маппинга наружу (UserDto -> UserResponseDto)
     private UserResponseDto convertToResponseDto(UserDto dto) {
         return UserResponseDto.builder()
-                .id(dto.getId())
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .age(dto.getAge())
-                .createdAt(dto.getCreatedAt()) // Если в UserDto нет createdAt, укажите java.time.LocalDateTime.now()
-                .build();
-    }
-
-    // Вспомогательный метод маппинга внутрь (UserRequestDto -> UserDto)
-    private UserDto convertToUserDto(UserRequestDto request) {
-        return UserDto.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .age(request.getAge())
+                .id(dto.id())
+                .name(dto.name())
+                .email(dto.email())
+                .age(dto.age())
+                // Передаем createdCode. Если в UserResponseDto нужен тип LocalDateTime,
+                // преобразуем Instant с помощью ofInstant:
+                .createdAt(dto.createdCode() )
                 .build();
     }
 }
