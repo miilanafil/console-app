@@ -8,4 +8,4 @@ public record UserDto(
         String email,
         Integer age,
         Instant createdCode
-) {}
+) { }
