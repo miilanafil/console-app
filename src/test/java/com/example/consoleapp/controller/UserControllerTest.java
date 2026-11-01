@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean; // Используем MockBean для Spring Boot < 3.4
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
+
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -27,7 +27,7 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean // Подменяем реальный сервис заглушкой
+    @MockBean
     private UserService userService;
 
     @Test
@@ -52,12 +52,11 @@ class UserControllerTest {
     @Test
     void getUserById_ShouldReturnUser_WhenUserExists() throws Exception {
         Long userId = 1L;
-        // Данные для заглушки сервиса (UserDto)
+
         UserDto mockServiceResponse = new UserDto(userId, "Milana", "milana@example.com", 20, java.time.Instant.now());
 
         Mockito.when(userService.getUserById(userId)).thenReturn(mockServiceResponse);
 
-        // Проверяем GET эндпоинт контроллера
         mockMvc.perform(get("/api/users/{id}", userId))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -72,7 +71,7 @@ class UserControllerTest {
         // То, что клиент посылает в теле POST-запроса
         UserRequestDto requestDto = new UserRequestDto("Yana", "yana@example.com", 22);
 
-        // То, что сервис вернет обратно контроллеру после "сохранения" в БД (UserDto)
+        // То, что сервис вернет обратно контроллеру после сохр. в БД (UserDto)
         UserDto savedUserDto = new UserDto(3L, "Yana", "yana@example.com", 22, java.time.Instant.now());
 
         // Контроллер внутри вызывает convertToUserDto(requestDto), поэтому мокаем с Mockito.any()
@@ -92,10 +91,8 @@ class UserControllerTest {
     void deleteUser_ShouldReturnNoContent() throws Exception {
         Long userId = 1L;
 
-        // Исправлено: передаем сам сервис в when(), а метод вызываем снаружи
         Mockito.doNothing().when(userService).deleteUser(userId);
 
-        // Выполняем DELETE запрос
         mockMvc.perform(delete("/api/users/{id}", userId))
                 .andExpect(status().isNoContent()); // Ожидаем HTTP 204 No Content
     }
