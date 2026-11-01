@@ -41,6 +41,7 @@ public class User {
         this.age = age;
     }
 
+    // гетт сетт
     public Long getId() {
         return id;
     }
