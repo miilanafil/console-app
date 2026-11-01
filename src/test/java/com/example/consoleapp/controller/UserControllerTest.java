@@ -32,13 +32,12 @@ class UserControllerTest {
 
     @Test
     void getAllUsers_ShouldReturnListOfUsers() throws Exception {
-        // Данные, которые якобы вернет наш сервис (UserDto)
+
         UserDto user1 = new UserDto(1L, "Milana", "milana@example.com", 20, java.time.Instant.now());
         UserDto user2 = new UserDto(2L, "Ivan", "ivan@example.com", 25, java.time.Instant.now());
 
         Mockito.when(userService.getAllUsers()).thenReturn(List.of(user1, user2));
 
-        // Выполняем запрос и проверяем, что контроллер отдал их как положено
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -68,16 +67,15 @@ class UserControllerTest {
 
     @Test
     void createUser_ShouldReturnCreatedUser() throws Exception {
-        // То, что клиент посылает в теле POST-запроса
-        UserRequestDto requestDto = new UserRequestDto("Yana", "yana@example.com", 22);
-
-        // То, что сервис вернет обратно контроллеру после сохр. в БД (UserDto)
-        UserDto savedUserDto = new UserDto(3L, "Yana", "yana@example.com", 22, java.time.Instant.now());
-
-        // Контроллер внутри вызывает convertToUserDto(requestDto), поэтому мокаем с Mockito.any()
+        //Это клиент посылает в теле POST-запроса
+        UserRequestDto requestDto = new UserRequestDto("Nastya", "nastya@example.com", 22);
+        //это сервис вернет контроллеру после сохр. в БД (UserDto)
+        UserDto savedUserDto = new UserDto(3L, "Nastya", "nastya@example.com", 22, java.time.Instant.now());
+        //Контроллер внутри вызывает convertToUserDto(requestDto)- мокаем с Mockito.any()
         Mockito.when(userService.createUser(Mockito.any(UserRequestDto.class))).thenReturn(savedUserDto);
 
-        // Выполняем POST запрос
+        // Выполняем POST запрос:
+
         mockMvc.perform(post("/api/users")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
