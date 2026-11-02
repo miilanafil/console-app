@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: notification-service
+  kafka:
+    bootstrap-servers: localhost:9092
+  mail:
+    host: localhost
+    port: 1025
+
+notification:
+  mail:
+    from: no-reply@console-app.local
+
+logging:
+  level:
+    com.example.notificationservice: DEBUG
