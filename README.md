@@ -78,30 +78,138 @@ Unit Tests
 | Волкова Анастасия | Удаление старых DAO, создание репозитория, создание контроллера, эндпоинты и тестов для API.                         |
 
 
+## Домашнее задание №5: Kafka
+
+**Задание:**
+Kafka
+Реализовать микросервис(notification-service) для отправки сообщения на почту при удалении или добавлении пользователя.
+Использовать необходимые модули spring и kafka.
+При удалении или создании юзера приложение, реализованное до этого(user-service), должно отправлять сообщение в kafka, в котором содержится информация об операции(удаление или создание) и email юзера.
+Новый микросервис(notification-service) должен получить сообщение из kafka и отправить сообщение на почту юзера в зависимости от операции: удаление - Здравствуйте! Ваш аккаунт был удалён. Создание - Здравствуйте! Ваш аккаунт на сайте ваш сайт был успешно создан.
+Также отдельно добавить API, которая будет отправлять сообщение на почту(почти тот же функционал, что и через кафку).
+Написать интеграционные тесты для проверки отправки сообщения на почту.
+## Распределение задач ДЗ №5
+
+| Участник | Зона ответственности |
+|---|---|
+| Филиппович Милана | docker-compose (Kafka и Mailpit), отправка писем, приём сообщений из Kafka с ручным подтверждением, повторные попытки и отдельный топик для сломанных сообщений, интеграционные тесты Kafka. |
+| Волкова Анастасия | Подключение Kafka к user-service и отправка событий при создании и удалении пользователя, REST API в notification-service, тесты на эти части. |
+
+В репозитории два приложения:
+
+```
+console-app/
+├── pom.xml, src/             user-service
+├── docker-compose.yml        Postgres, Kafka, Mailpit
+└── notification-service/     notification-service, свой pom.xml
+```
+
+| Что | Адрес |
+|---|---|
+| user-service | http://localhost:8080 |
+| notification-service | http://localhost:8081 |
+| Kafka | localhost:9092 |
+| PostgreSQL | localhost:5432 |
+| Mailpit, SMTP | localhost:1025 |
+| Mailpit, веб-интерфейс с письмами | http://localhost:8025 |
+
+### Сообщение в Kafka
+
+- Топик: `user-events`.
+- Ключ сообщения: email пользователя. Все события одного пользователя попадают в одну партицию, поэтому порядок событий сохраняется.
+- Значение: JSON, `operation` принимает значение `CREATED` или `DELETED`.
+
+```json
+{"operation":"CREATED","email":"user@example.com"}
+```
+
+Классы события в сервисах независимы: в каждом сервисе свой `UserEvent`, общего кода нет.
+
+### API отправки письма
+
+`POST http://localhost:8081/api/notifications`
+
+```json
+{"operation":"DELETED","email":"user@example.com"}
+```
+
+- 200 OK, если письмо отправлено.
+- 400, если email некорректный или не указана операция.
+
+### Как notification-service читает сообщения
+
+- Подтверждение ручное: сообщение помечается прочитанным только после того, как письмо отправлено. Если сервис упал посреди обработки, сообщение будет прочитано снова.
+- Если письмо не отправилось, делаются ещё 2 попытки с паузой в 1 секунду.
+- Если сообщение сломано (не JSON, нет `operation` или `email`), повторы не нужны: оно сразу уходит в топик `user-events.DLT`, а очередь продолжает работать.
+- Топики `user-events` и `user-events.DLT` создаются сервисом, сообщения в них хранятся 7 дней, потом удаляются.
+
+### Команды для проверки
+
+Отправить сообщение в топик вручную:
+
+```bash
+echo '{"operation":"CREATED","email":"test@example.com"}' | docker exec -i console-app-kafka /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server localhost:9092 --topic user-events
+```
+
+Посмотреть сломанные сообщения:
+
+```bash
+docker exec console-app-kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic user-events.DLT --from-beginning
+```
+
+Посмотреть, до какого сообщения дочитал сервис и сколько осталось (колонка LAG):
+
+```bash
+docker exec console-app-kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group notification-service
+```
+
+## Тесты notification-service
+
+Интеграционные тесты поднимают настоящую Kafka в Testcontainers и тестовый почтовый сервер GreenMail:
+
+- письмо при создании пользователя приходит с нужным текстом;
+- письмо при удалении пользователя приходит с нужным текстом;
+- сообщение, которое не является JSON, попадает в `user-events.DLT`, письмо не отправляется;
+- сообщение без email попадает в `user-events.DLT`, письмо не отправляется;
+- после сломанного сообщения следующее нормальное сообщение обрабатывается.
+
+Для запуска тестов Docker Desktop должен быть запущен.
+
 ## Как запустить проект
 
-
-**Шаг 1. Запустить базу данных**
+**Шаг 1. Запустить Postgres, Kafka и Mailpit**
 
 Выполнить команду в корне проекта:
 
+```bash
 docker compose up -d
+```
 
-Шаг 2. Запустить приложение
+**Шаг 2. Запустить user-service**
 
-В терминале выполнить:
+В IntelliJ IDEA запустить `ConsoleAppApplication` или выполнить:
 
-bash
+```bash
 mvn spring-boot:run
-Или запустить файл ConsoleAppApplication.java прямо в IntelliJ IDEA.
+```
 
-Шаг 3. Проверить работу API
+Приложение будет доступно по адресу http://localhost:8080.
 
-После запуска приложение будет доступно по адресу: http://localhost:8080.
-Проверить работу можно через Postman, браузер или curl (например, GET-запрос на http://localhost:8080/api/users).
+**Шаг 3. Запустить notification-service**
 
-Параметры подключения к БД
+Один раз добавить `notification-service/pom.xml` как Maven-проект: правой кнопкой на файле → **Add as Maven Project**. Затем запустить `NotificationServiceApplication`. Сервис будет доступен на порту 8081.
 
-URL: jdbc:postgresql://localhost:5432/console_app
-User: postgres
-Password: postgres
+**Шаг 4. Проверить работу**
+
+1. Создать пользователя: `POST http://localhost:8080/api/users`.
+2. Открыть http://localhost:8025: должно появиться письмо о создании аккаунта.
+3. Удалить пользователя: `DELETE http://localhost:8080/api/users/{id}`. В Mailpit появится письмо об удалении.
+4. Проверить прямой API: `POST http://localhost:8081/api/notifications`.
+
+Проверить работу user-service можно через Postman, браузер или curl (например, GET-запрос на http://localhost:8080/api/users).
+
+**Параметры подключения к БД**
+
+- URL: `jdbc:postgresql://localhost:5432/console_app`
+- User: `postgres`
+- Password: `postgres`
