@@ -1,0 +1,33 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: notification-service
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+      properties:
+        spring.json.trusted.packages: "com.example.consoleapp.event,com.example.notificationservice.event"
+
+    listener:
+      ack-mode: manual_immediate
+  mail:
+    host: localhost
+    port: 1025
+
+notification:
+  mail:
+    from: no-reply@console-app.local
+  kafka:
+    topic: user-events
+
+logging:
+  level:
+    com.example.notificationservice: DEBUG
