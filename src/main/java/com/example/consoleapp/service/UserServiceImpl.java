@@ -77,9 +77,25 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
-        if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("Пользователь с id = " + id + " не найден");
-        }
-        userRepository.deleteById(id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Пользователь с id = " + id + " не найден"));
+
+        userRepository.delete(user);
+
+        UserEvent event = new UserEvent(OperationType.DELETED, user.getEmail());
+
+        kafkaTemplate.send(TOPIC, event);
     }
+
+
+
+//    @Override
+//    public void deleteUser(Long id) {
+//        if (!userRepository.existsById(id)) {
+//            throw new IllegalArgumentException("Пользователь с id = " + id + " не найден");
+//        }
+//        userRepository.deleteById(id);
+//
+//        UserEvent event = new UserEvent(OperationType.DELETED, );
+//    }
 }
