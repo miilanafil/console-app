@@ -10,15 +10,17 @@ import com.example.consoleapp.repository.UserRepository;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
-//
-  private final UserRepository userRepository;
-   private final UserMapper userMapper;
+    //
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 //
 //    public UserServiceImpl(UserRepository userRepository, UserMapper userMapper) {
 //        this.userRepository = userRepository;
@@ -40,8 +42,14 @@ public class UserServiceImpl implements UserService {
         User user = userMapper.toEntity(requestDto);
         User savedUser = userRepository.save(user);
 
-        UserEvent event = new UserEvent(OperationType.CREATED, requestDto.email());
-        kafkaTemplate.send(TOPIC, event);
+        UserEvent event = new UserEvent(OperationType.CREATED, savedUser.getEmail());
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                kafkaTemplate.send(TOPIC, event);
+            }
+        });
 
         return userMapper.toDto(savedUser);
     }
@@ -80,11 +88,17 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Пользователь с id = " + id + " не найден"));
 
+        String email = user.getEmail(); 
         userRepository.delete(user);
 
-        UserEvent event = new UserEvent(OperationType.DELETED, user.getEmail());
+        UserEvent event = new UserEvent(OperationType.DELETED, email);
 
-        kafkaTemplate.send(TOPIC, event);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                kafkaTemplate.send(TOPIC, event);
+            }
+        });
     }
 
 
