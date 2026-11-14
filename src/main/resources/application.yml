@@ -30,3 +30,15 @@ logging:
   level:
     com.example.consoleapp: DEBUG
     org.hibernate.SQL: DEBUG
+
+springdoc:
+  swagger-ui:
+    doc-expansion: list
+    tags-sorter: alpha
+    operations-sorter: alpha
+    default-models-expand-depth: -1
+    filter: true
+    display-request-duration: true
+    try-it-out-enabled: true
+    syntax-highlight:
+      theme: monokai
