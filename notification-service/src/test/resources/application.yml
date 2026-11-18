@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: notification-service
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: manual_immediate
+  mail:
+    host: localhost
+    port: 1025
+
+notification:
+  mail:
+    from: no-reply@console-app.local
+  kafka:
+    topic: user-events
+
+logging:
+  level:
+    com.example.notificationservice: DEBUG
