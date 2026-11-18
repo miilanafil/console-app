@@ -22,11 +22,24 @@
     <properties>
         <java.version>17</java.version>
 
+        <spring-cloud.version>2023.0.6</spring-cloud.version>
         <springdoc.version>2.6.0</springdoc.version>
         <testcontainers.version>2.0.2</testcontainers.version>
         <commons-compress.version>1.27.1</commons-compress.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -72,7 +85,11 @@
             <version>${commons-lang3.version}</version>
         </dependency>
 
-        <!-- ===== TEST ===== -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-config</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
