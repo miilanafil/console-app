@@ -16,8 +16,11 @@
     <groupId>com.example</groupId>
     <artifactId>console-app</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
     <name>console-app</name>
+    <modules>
+        <module>api-gateway</module>
+    </modules>
 
     <properties>
         <java.version>17</java.version>
