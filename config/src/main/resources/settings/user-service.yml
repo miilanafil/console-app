@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  datasource:
+    url: jdbc:postgresql://localhost:5432/console_app
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.example.consoleapp: DEBUG
+    org.hibernate.SQL: DEBUG
+
+springdoc:
+  swagger-ui:
+    doc-expansion: list
+    tags-sorter: alpha
+    operations-sorter: alpha
+    default-models-expand-depth: -1
+    filter: true
+    display-request-duration: true
+    try-it-out-enabled: true
+    syntax-highlight:
+      theme: monokai
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
