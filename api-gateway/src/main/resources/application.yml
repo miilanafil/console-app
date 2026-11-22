@@ -1,35 +1,37 @@
 server:
-  port: 8080
+  port: 8090
 
 spring:
   application:
     name: api-gateway
-    cloud:
-      gateway:
-        routes:
-          - id: notifications-service
-            uri:
-              ld: //notification-service
-            predicates:
-                - Path=/api/notifications/**
-            filters:
-              - StripPrefix=1
-              - name: CircuitBreaker
-                args:
+  main:
+    web-application-type: reactive
+  config:
+    import: "optional:configserver:"
+  cloud:
+    gateway:
+      routes:
+        - id: notifications-service
+          uri: lb://notification-service
+          predicates:
+              - Path=/api/notifications/**
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
                   name: notificationsServiceCircuitBreaker
                   fallbackUri: forward:/fallback/notifications
 
-          - id: user-service
-            uri:
-              ld: //user-service
-            predicates:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
               - Path=/api/users/**
-            filters:
-              - StripPrefix=1
-              - name: CircuitBreaker
-                args:
-                  name: userServiceCircuitBreaker
-                  fallbackUri: forward:/fallback/users
+          filters:
+            - StripPrefix=1
+            - name: CircuitBreaker
+              args:
+                name: userServiceCircuitBreaker
+                fallbackUri: forward:/fallback/users
 
       default-filters:
         - PreserveHostHeader
@@ -42,7 +44,7 @@ resilience4j:
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
         permittedNumberOfCallsInHalfOpenState: 3
-      orderServiceCircuitBreaker:
+      notificationsServiceCircuitBreaker:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
@@ -50,5 +52,5 @@ resilience4j:
     instances:
       userServiceCircuitBreaker:
         timeoutDuration: 3s
-      orderServiceCircuitBreaker:
+      notificationsServiceCircuitBreaker:
         timeoutDuration: 3s
