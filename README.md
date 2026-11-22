@@ -230,7 +230,7 @@ docker exec console-app-kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstra
 ![Ответ 400 на некорректный email](docs/swagger-400.png)
 ### HATEOAS
 
-HATEOAS означает, что вместе с данными API возвращает ссылки, по которым можно перейти дальше. Клиенту не нужно заранее знать адреса, достаточно идти по ссылкам из ответа.
+HATEOAS означает, что вместе с данными API возвращает ссылки, по которым можно перейти дальше. Клиенту не нужно заранее знать адреса, достаточно идти по ссылкам из ответа
 
 Ответ на `GET /api/users/1`:
 
@@ -273,39 +273,68 @@ HATEOAS означает, что вместе с данными API возвра
 }
 ```
 
-Ссылки сейчас добавлены в ответы на чтение (`GET`). Ответы на `POST` и `PUT` возвращают пользователя без ссылок.
+Ссылки сейчас добавлены в ответы на чтение (`GET`). Ответы на `POST` и `PUT` возвращают пользователя без ссылок
 
-Тесты контроллера (MockMvc) проверяют формат ответа и ссылки `self` у пользователя и у списка.
+Тесты контроллера (MockMvc) проверяют формат ответа и ссылки `self` у пользователя и у списка
 
-## Как запустить проект
 
-**Шаг 1. Запустить Postgres, Kafka и Mailpit**
+## Домашнее задание №7: Microservices patterns
 
-Выполнить команду 
-```bash
+**Задание:**
+Добавить к существующей системе паттерны: API Gateway, Service Discovery, Circuit Breaker, External Configuration (реализации Spring Cloud).
+
+## Распределение задач 
+
+| Участник | Зона ответственности                                                               |
+|---|------------------------------------------------------------------------------------|
+| Филиппович Милана | Eureka, перевод настроек user-service и notification-service на Config Server, API |
+| Волкова Анастасия | шлюз, маршруты на сервисы, тесты, перевод маршрутов на имена из Eureka   |
+
+### Архитектура
+
+- **config-server** (8888) — единое хранилище настроек
+- **discovery-server** (8761, Eureka) — реестр сервисов, сервисы регистрируются тут при запуске
+- **user-service** (8080) — CRUD пользователей
+- **notification-service** (8081) — отправка писем
+- **api-gateway** (8090) — единая входная точка для клиентов
+
+
+### Как запустить проект
+
+Шаг 1. Запустить инфраструктуру (Postgres, Kafka, Mailpit)
+
+Выполнить команду:
+
+bash
 docker compose up -d
-```
 
-**Шаг 2. Запустить user-service**
+Шаг 2. Запустить config-server (8888)
 
-В IntelliJ IDEA запустить `ConsoleAppApplication`
+запустить ConfigApplication
 
-Приложение будет доступно по адресу http://localhost:8080.
+Шаг 3. Запустить discovery-server (8761)
 
-**Шаг 3. Запустить notification-service**
+Запустить RegistryApplication и открыть http://localhost:8761 
 
-**Шаг 4. Проверить работу**
+Шаг 4. Запустить user-service (8080) и notification-service (8081)
 
-1. Открыть Swagger: http://localhost:8080/swagger-ui.html.
-2. Создать пользователя методом `POST /api/users`.
-3. Открыть http://localhost:8025: должно появиться письмо о создании аккаунта.
-4. Удалить пользователя методом `DELETE /api/users/{id}`. В Mailpit появится письмо об удалении.
-5. Получить пользователя методом `GET /api/users/{id}`: в ответе будут ссылки `_links`.
+Запустить ConsoleAppApplication и NotificationServiceApplication
 
-Проверить работу user-service можно также через Postman, браузер или curl (например, GET-запрос на http://localhost:8080/api/users).
+Шаг 5. Запустить api-gateway (8090)
 
-**Параметры подключения к БД**
+Запустить ApiGatewayApplication
 
-- URL: `jdbc:postgresql://localhost:5432/console_app`
-- User: `postgres`
-- Password: `postgres`
+Шаг 6. Проверить работу
+
+Открыть Swagger: http://localhost:8080/swagger-ui.html
+Создать пользователя методом POST /api/users
+Открыть http://localhost:8025: должно появиться письмо о создании аккаунта
+Удалить пользователя методом DELETE /api/users/{id}. В Mailpit появится письмо об удалении
+Получить пользователя методом GET /api/users/{id}: в ответе будут ссылки _links
+Параметры подключения к БД
+
+URL: jdbc:postgresql://localhost:5432/console_app
+
+User: postgres
+
+Password: postgres
