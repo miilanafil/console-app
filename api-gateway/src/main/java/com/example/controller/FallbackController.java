@@ -19,7 +19,7 @@ public class FallbackController {
                 .body(Map.of("error", "Пользовательский сервис верменно недоступен")));
 
     }
-@RequestMapping
+@RequestMapping("/notifications")
     public Mono<ResponseEntity<Map<String, String>>>notificationFallback(){
     return Mono.just(ResponseEntity
             .status(HttpStatus.SERVICE_UNAVAILABLE)

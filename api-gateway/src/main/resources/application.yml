@@ -4,28 +4,24 @@ server:
 spring:
   application:
     name: api-gateway
-  main:
-    web-application-type: reactive
-  config:
-    import: "optional:configserver:"
   cloud:
     gateway:
       routes:
-        - id: notifications-service
+        - id: notification-service
           uri: lb://notification-service
           predicates:
-              - Path=/api/notifications/**
+            - Path=/api/notifications/**
           filters:
             - StripPrefix=1
             - name: CircuitBreaker
               args:
-                  name: notificationsServiceCircuitBreaker
-                  fallbackUri: forward:/fallback/notifications
+                name: notificationsServiceCircuitBreaker
+                fallbackUri: forward:/fallback/notifications
 
         - id: user-service
           uri: lb://user-service
           predicates:
-              - Path=/api/users/**
+            - Path=/api/users/**
           filters:
             - StripPrefix=1
             - name: CircuitBreaker
@@ -33,9 +29,11 @@ spring:
                 name: userServiceCircuitBreaker
                 fallbackUri: forward:/fallback/users
 
-      default-filters:
-        - PreserveHostHeader
-# Настройки порогов срабатывания Resilience4j
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
 resilience4j:
   circuitbreaker:
     instances:
@@ -48,6 +46,7 @@ resilience4j:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
   timelimiter:
     instances:
       userServiceCircuitBreaker:
