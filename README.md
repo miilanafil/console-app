@@ -324,6 +324,12 @@ docker compose up -d
 
 Запустить ApiGatewayApplication
 
+либо 
+
+1. Откройте панель **Maven** в правой части IntelliJ IDEA.
+2. Раскройте дерево: `api-gateway` -> **Plugins** -> **spring-boot**.
+3. Кликните по **`spring-boot:run`**.
+
 Шаг 6. Проверить работу
 
 Открыть Swagger: http://localhost:8080/swagger-ui.html
