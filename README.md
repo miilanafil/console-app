@@ -290,51 +290,75 @@ HATEOAS означает, что вместе с данными API возвра
 | Филиппович Милана | Eureka, перевод настроек user-service и notification-service на Config Server, API |
 | Волкова Анастасия | шлюз, маршруты на сервисы, тесты, перевод маршрутов на имена из Eureka   |
 
-### Архитектура
+## Домашнее задание №8: Docker
+**Задание:**
+Создать docker-compose.yml, который развернет всю микросервисную систему, включая Kafka, PostgreSQL, API Gateway, Service Discovery, External Configuration и 2 микросервиса(user-service и notification-service, созданные ранее). Проверить, что сервисы корректно взаимодействуют друг с другом в контейнерной среде.
 
-- **config-server** (8888) — единое хранилище настроек
-- **discovery-server** (8761, Eureka) — реестр сервисов, сервисы регистрируются тут при запуске
-- **user-service** (8080) — CRUD пользователей
-- **notification-service** (8081) — отправка писем
-- **api-gateway** (8090) — единая входная точка для клиентов
+| Сервис | Назначение | Порт |
+|---|---|---|
+| `api-gateway` | Единая входная точка для API | 8090 |
+| `config-server` | Централизованная конфигурация | 8888 |
+| `discovery-service` | Регистрация и обнаружение микросервисов (Eureka) | 8761 |
+| `user-service` | Работа с пользователями | 8080 |
+| `notification-service` | Отправка уведомлений по электронной почте | 8081 |
+| `postgres` | Хранение данных пользователей | 5432 |
+| `kafka` | Передача событий между сервисами | 9092 |
+| `mailpit` | Тестовый SMTP-сервер и просмотр писем | 1025, 8025 |
 
 
-### Как запустить проект
+Запуск проекта
 
-Шаг 1. Запустить инфраструктуру (Postgres, Kafka, Mailpit)
+Для запуска необходим установленный Docker.
+1. Склонировать репозиторий и перейти в корневую папку проекта.
+2. Запустить все контейнеры командой:
+```bash
+   docker compose up --build
+   ```
+   Docker Compose соберёт образы сервисов
 
-Выполнить команду:
+Для запуска в фоновом режиме можно использовать:
+```bash
+docker compose up --build -d
+```
 
-bash
-docker compose up -d
+Проверка работы
+После запуска доступны следующие компоненты:
 
-Шаг 2. Запустить config-server (8888)
+API Gateway	http://localhost:8090
 
-запустить ConfigApplication
+Config Server	http://localhost:8888
 
-Шаг 3. Запустить discovery-server (8761)
+Eureka Dashboard	http://localhost:8761
 
-Запустить RegistryApplication и открыть http://localhost:8761 
+user-service	http://localhost:8080
 
-Шаг 4. Запустить user-service (8080) и notification-service (8081)
+Swagger UI user-service	http://localhost:8080/swagger-ui.html
 
-Запустить ConsoleAppApplication и NotificationServiceApplication
+notification-service	http://localhost:8081
 
-Шаг 5. Запустить api-gateway (8090)
+Mailpit	http://localhost:8025
 
-Запустить ApiGatewayApplication
+PostgreSQL	localhost:5432
 
-Шаг 6. Проверить работу
+Kafka	localhost:9092
 
-Открыть Swagger: http://localhost:8080/swagger-ui.html
-Создать пользователя методом POST /api/users
-Открыть http://localhost:8025: должно появиться письмо о создании аккаунта
-Удалить пользователя методом DELETE /api/users/{id}. В Mailpit появится письмо об удалении
-Получить пользователя методом GET /api/users/{id}: в ответе будут ссылки _links
-Параметры подключения к БД
 
-URL: jdbc:postgresql://localhost:5432/console_app
+Для проверки системы:
+1. Открыть Eureka Dashboard: http://localhost:8761 и проверить регистрацию сервисов.
+2. Открыть Swagger UI user-service: http://localhost:8080/swagger-ui.html.
+3. Создать пользователя с помощью POST /api/users.
+4. Проверить получение письма о создании пользователя в Mailpit: http://localhost:8025.
+5. Удалить пользователя с помощью DELETE /api/users/{id} и проверить письмо об удалении в Mailpit.
+6. Проверить работу API Gateway, отправляя запросы через порт 8090 согласно настроенным маршрутам.
+   Остановка проекта
+   Остановить контейнеры:
+```bash
+   docker compose down
+   ```
+   Данные PostgreSQL сохраняются в Docker volume postgres_data и не удаляются при обычной остановке контейнеров.
 
-User: postgres
-
-Password: postgres
+Чтобы остановить контейнеры и удалить также тома с сохранёнными данными:
+```bash
+docker compose down -v
+```
+Команда docker compose down -v удаляет volumes, в том числе сохранённые данные PostgreSQL. Использовать её следует, если данные больше не нужны.
