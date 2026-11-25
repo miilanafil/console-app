@@ -290,57 +290,57 @@ HATEOAS означает, что вместе с данными API возвра
 | Филиппович Милана | Eureka, перевод настроек user-service и notification-service на Config Server, API |
 | Волкова Анастасия | шлюз, маршруты на сервисы, тесты, перевод маршрутов на имена из Eureka   |
 
-### Архитектура
+## Домашнее задание №8: DevOps
 
-- **config-server** (8888) — единое хранилище настроек
-- **discovery-server** (8761, Eureka) — реестр сервисов, сервисы регистрируются тут при запуске
-- **user-service** (8080) — CRUD пользователей
-- **notification-service** (8081) — отправка писем
-- **api-gateway** (8090) — единая входная точка для клиентов
+**Задание:**
+Создать docker-compose.yml, который развернет всю микросервисную систему, включая Kafka, PostgreSQL, API Gateway, Service Discovery, External Configuration и 2 микросервиса(user-service и notification-service, созданные ранее). Проверить, что сервисы корректно взаимодействуют друг с другом в контейнерной среде.
 
+### Запуск проекта
 
-### Как запустить проект
+Для запуска всех микросервисов и необходимых зависимостей используется Docker Compose.
 
-Шаг 1. Запустить инфраструктуру (Postgres, Kafka, Mailpit)
+Выполните:
 
-Выполнить команду:
+```bash
+docker compose up --build
+```
 
-bash
-docker compose up -d
+Для запуска в фоновом режиме:
 
-Шаг 2. Запустить config-server (8888)
+```bash
+docker compose up --build -d
+```
 
-запустить ConfigApplication
+### Сервисы
 
-Шаг 3. Запустить discovery-server (8761)
+| Сервис | Порт |
+|---|---:|
+| API Gateway | 8090 |
+| Config Server | 8888 |
+| Discovery Service (Eureka) | 8761 |
+| User Service | 8080 |
+| Notification Service | 8081 |
+| PostgreSQL | 5432 |
+| Kafka | 9092 |
+| Mailpit SMTP | 1025 |
+| Mailpit Web UI | 8025 |
 
-Запустить RegistryApplication и открыть http://localhost:8761 
+### Проверка работы
 
-Шаг 4. Запустить user-service (8080) и notification-service (8081)
+- Eureka Dashboard: http://localhost:8761
+- Swagger UI: http://localhost:8090/swagger-ui/index.html
+- Mailpit: http://localhost:8025
 
-Запустить ConsoleAppApplication и NotificationServiceApplication
+### Остановка проекта
 
-Шаг 5. Запустить api-gateway (8090)
+```bash
+docker compose down
+```
 
-Запустить ApiGatewayApplication
+Для остановки с удалением данных PostgreSQL:
 
-либо 
+```bash
+docker compose down -v
+```
 
-1. Откройте панель **Maven** в правой части IntelliJ IDEA.
-2. Раскройте дерево: `api-gateway` -> **Plugins** -> **spring-boot**.
-3. Кликните по **`spring-boot:run`**.
-
-Шаг 6. Проверить работу
-
-Открыть Swagger: http://localhost:8080/swagger-ui.html
-Создать пользователя методом POST /api/users
-Открыть http://localhost:8025: должно появиться письмо о создании аккаунта
-Удалить пользователя методом DELETE /api/users/{id}. В Mailpit появится письмо об удалении
-Получить пользователя методом GET /api/users/{id}: в ответе будут ссылки _links
-Параметры подключения к БД
-
-URL: jdbc:postgresql://localhost:5432/console_app
-
-User: postgres
-
-Password: postgres
+команда `docker compose down -v` удаляет данные из Docker volume.
