@@ -12,7 +12,6 @@ spring:
           predicates:
             - Path=/api/notifications/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: notificationsServiceCircuitBreaker
@@ -23,7 +22,6 @@ spring:
           predicates:
             - Path=/api/users/**
           filters:
-            - StripPrefix=1
             - name: CircuitBreaker
               args:
                 name: userServiceCircuitBreaker

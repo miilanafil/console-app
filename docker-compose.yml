@@ -68,6 +68,8 @@ services:
   user-service:
     build: .
     container_name: user-service
+    ports:
+      - "8080:8080"
     environment:
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
@@ -89,6 +91,8 @@ services:
   notification-service:
     build: ./notification-service
     container_name: notification-service
+    ports:
+      - "8081:8081"
     environment:
       SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       SPRING_CLOUD_CONFIG_URI: http://config-server:8888
