@@ -1,25 +1,106 @@
 services:
-
   api-gateway:
     build: ./api-gateway
     container_name: api-gateway
     ports:
       - "8090:8090"
     environment:
-      - SPRING_CLOUD_GATEWAY_ROUTES_0_URI=http://console-app:8081
-    depends_on:
-      - console-app
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
 
-  console-app:
-    build: ./console-app
-    container_name: console-app
-    expose:
-        - "8081"
-    environment:
-      - SERVER_PORT=8081
-       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
-      - kafka
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  config-server:
+    build: ./config
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      SPRING_PROFILES_ACTIVE: native
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider -q http://localhost:8888 || [ $? -eq 8 ]" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+  discovery-service:
+    build: ./registry
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+    depends_on:
+      config-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget --spider -q http://localhost:8761 || [ $? -eq 8 ]" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservices-net
+
+#  console-app:
+#    build: ./console-app
+#    container_name: console-app
+#    expose:
+#        - "8081"
+#    environment:
+#      - SERVER_PORT=8081
+#      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+#    depends_on:
+#      kafka:
+#        condition: service_healthy
+#
+#    networks:
+#      - microservices-net
+
+  user-service:
+    build: .
+    container_name: user-service
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/console_app
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    environment:
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - microservices-net
 
 
   postgres:
@@ -39,7 +120,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
+    networks:
+      - microservices-net
 
   kafka:
     image: apache/kafka:3.8.0
@@ -51,10 +133,10 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
@@ -66,7 +148,8 @@ services:
       timeout: 10s
       retries: 10
       start_period: 15s
-
+    networks:
+      - microservices-net
   mailpit:
     image: axllent/mailpit:latest
     container_name: console-app-mailpit
@@ -74,6 +157,11 @@ services:
     ports:
       - "1025:1025"
       - "8025:8025"
-
+    networks:
+      - microservices-net
 volumes:
   postgres_data:
+
+networks:
+  microservices-net:
+    driver: bridge
